@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bảng Điều Khiển</title>
+    <script
+      type="text/javascript"
+      src="https://www.gstatic.com/charts/loader.js"
+    ></script>
+    <style>
+      :root {
+        --primary-color: #4285f4;
+        --background-color: #f5f5f5;
+        --card-background: #ffffff;
+        --text-color: #212121;
+        --text-light: #757575;
+        --border-color: #e0e0e0;
+        --success-color: #0f9d58;
+        --danger-color: #db4437;
+      }
+      body {
+        margin: 0;
+        padding: 15px 15px 80px 15px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background-color: var(--card-background);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+      }
+      .nav-button {
+        background: none;
+        border: none;
+        color: var(--text-light);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 5px 10px;
+        transition: color 0.2s;
+      }
+      .nav-button.active {
+        color: var(--primary-color);
+      }
+      .nav-button .icon {
+        font-size: 24px;
+      }
+      .card {
+        background-color: var(--card-background);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+      }
+      .card-title {
+        font-size: 18px;
+        font-weight: 500;
+        margin: 0 0 12px 0;
+      }
+      .btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        color: white;
+        margin-top: 10px;
+        transition: background-color 0.2s, opacity 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background-color: var(--primary-color);
+      }
+      .btn-success {
+        background-color: var(--success-color);
+      }
+      .btn-danger {
+        background-color: var(--danger-color);
+      }
+      .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+      }
+      .status-grid {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 8px 16px;
+        align-items: center;
+      }
+      .status-label {
+        color: var(--text-light);
+      }
+      .status-value {
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+      .dot-green {
+        background-color: var(--success-color);
+      }
+      .dot-red {
+        background-color: var(--danger-color);
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+      .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 16px;
+      }
+      .form-group input[readonly] {
+        background-color: #f0f0f0;
+        cursor: not-allowed;
+      }
+      .toast {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        z-index: 2000;
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-10px);
+      }
+      .loader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+      .loader {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid var(--primary-color);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .accordion-header {
+        padding: 16px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .accordion-header::after {
+        content: "▼";
+        font-size: 14px;
+        transition: transform 0.2s;
+      }
+      .accordion-header.active::after {
+        transform: rotate(180deg);
+      }
+      .accordion-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+        padding: 0 16px;
+        border-top: 1px solid var(--border-color);
+      }
+      .accordion-content.show {
+        padding-bottom: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-content">
+      <div id="controls-content" class="tab-content active">
+        <div class="card">
+          <h2 class="card-title">Trạng thái Hệ thống</h2>
+          <div class="status-grid">
+            <div class="status-label">Cấu hình</div>
+            <div id="status-configured" class="status-value"></div>
+            <div class="status-label">Khởi tạo</div>
+            <div id="status-initialized" class="status-value"></div>
+            <div class="status-label">Đồng bộ Tự động</div>
+            <div id="status-autosync" class="status-value"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Hành động</h2>
+          <button id="btn-main-action" class="btn btn-primary">
+            🚀 Bắt đầu Khởi tạo
+          </button>
+          <button id="btn-manual-sync" class="btn btn-success">
+            🔄 Cập nhật Nhanh
+          </button>
+          <button id="btn-toggle-autosync" class="btn btn-secondary">
+            ⚡ Kích hoạt Đồng bộ Tự động
+          </button>
+        </div>
+      </div>
+      <div id="dashboard-content" class="tab-content">
+        <div class="card">
+          <h2 class="card-title">Báo cáo Chuyên cần</h2>
+          <div id="chart-container"><p>Đang tải dữ liệu...</p></div>
+        </div>
+      </div>
+
+      <div id="settings-content" class="tab-content">
+        <div class="card">
+          <div class="accordion-header active">Cài đặt chung</div>
+          <div class="accordion-content show" style="max-height: 500px">
+            <div class="form-group">
+              <label for="studentId">Mã số sinh viên (*)</label
+              ><input type="text" id="studentId" />
+            </div>
+            <div class="form-group">
+              <label for="email">Email (*)</label
+              ><input type="email" id="email" />
+            </div>
+            <div class="form-group">
+              <label>Spreadsheet ID (tự động tạo)</label
+              ><input type="text" id="spreadsheetId" readonly />
+            </div>
+            <div class="form-group">
+              <label>Calendar ID (tự động tạo/nhập)</label
+              ><input type="text" id="calendarId" />
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="accordion-header">Cài đặt nâng cao</div>
+          <div class="accordion-content">
+            <div class="form-group">
+              <label>Số buổi học/lần tải API</label
+              ><input type="number" id="pageSize" placeholder="100" />
+            </div>
+            <div class="form-group">
+              <label>Số lần thử lại tối đa (API lỗi)</label
+              ><input type="number" id="maxRetries" placeholder="3" />
+            </div>
+            <div class="form-group">
+              <label>Độ trễ giữa các lần thử lại (giây)</label
+              ><input type="number" id="retryDelaySeconds" placeholder="10" />
+            </div>
+            <div class="form-group">
+  <label>Gemini API Key</label>
+  <input type="password" id="geminiApiKey" placeholder="Nhập API Key của bạn tại đây" />
+</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="accordion-header">Thời điểm Đồng bộ Tự động</div>
+          <div class="accordion-content">
+            <p style="color: var(--text-light); font-size: 14px">
+              Để trống nếu không dùng. Thời gian sẽ được tự động làm tròn (VD:
+              07:08 -> 07:00).
+            </p>
+            <div class="form-group">
+              <label>Thời điểm 1 (HH:mm)</label
+              ><input type="time" id="syncTime1" />
+            </div>
+            <div class="form-group">
+              <label>Thời điểm 2 (HH:mm)</label
+              ><input type="time" id="syncTime2" />
+            </div>
+            <div class="form-group">
+              <label>Thời điểm 3 (HH:mm)</label
+              ><input type="time" id="syncTime3" />
+            </div>
+          </div>
+        </div>
+        <button id="btn-save-settings" class="btn btn-primary">
+          💾 Lưu Thay đổi
+        </button>
+      </div>
+    </div>
+
+    <nav class="bottom-nav">
+      <button class="nav-button active" onclick="switchTab('controls')">
+        <span class="icon">🕹️</span>Bảng điều khiển
+      </button>
+      <button class="nav-button" onclick="switchTab('dashboard')">
+        <span class="icon">📊</span>Báo cáo
+      </button>
+      <button class="nav-button" onclick="switchTab('settings')">
+        <span class="icon">⚙️</span>Cài đặt
+      </button>
+    </nav>
+    <div id="toast" class="toast"></div>
+    <div id="loader-overlay" class="loader-overlay">
+      <div class="loader"></div>
+    </div>
+
+    <script>
+      google.charts.load("current", { packages: ["corechart"] });
+      google.charts.setOnLoadCallback(drawChart); // Đăng ký hàm vẽ sau khi thư viện tải xong
+
+      // --- DOM Elements ---
+      const dom = {
+        loader: document.getElementById("loader-overlay"),
+        toast: document.getElementById("toast"),
+        navButtons: document.querySelectorAll(".nav-button"),
+        tabContents: document.querySelectorAll(".tab-content"),
+        status: {
+          configured: document.getElementById("status-configured"),
+          initialized: document.getElementById("status-initialized"),
+          autosync: document.getElementById("status-autosync"),
+        },
+        buttons: {
+          mainAction: document.getElementById("btn-main-action"),
+          toggleAutosync: document.getElementById("btn-toggle-autosync"),
+          manualSync: document.getElementById("btn-manual-sync"),
+          saveSettings: document.getElementById("btn-save-settings"),
+        },
+        chartContainer: document.getElementById("chart-container"),
+        inputs: {
+          studentId: document.getElementById("studentId"),
+          email: document.getElementById("email"),
+          spreadsheetId: document.getElementById("spreadsheetId"),
+          calendarId: document.getElementById("calendarId"),
+          pageSize: document.getElementById("pageSize"),
+          maxRetries: document.getElementById("maxRetries"),
+          retryDelaySeconds: document.getElementById("retryDelaySeconds"),
+          syncTime1: document.getElementById("syncTime1"),
+          syncTime2: document.getElementById("syncTime2"),
+          syncTime3: document.getElementById("syncTime3"),
+            geminiApiKey: document.getElementById("geminiApiKey"),
+        },
+      };
+      let toastTimeout;
+      let chartLoaded = false; // Biến cờ để chỉ vẽ biểu đồ một lần
+
+      // --- UI Logic ---
+      function setLoading(isLoading) {
+        dom.loader.style.display = isLoading ? "flex" : "none";
+      }
+
+      function showToast(message, isError = false) {
+        dom.toast.textContent = message;
+        dom.toast.style.backgroundColor = isError
+          ? "var(--danger-color)"
+          : "rgba(0,0,0,0.8)";
+        dom.toast.classList.add("show");
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(
+          () => dom.toast.classList.remove("show"),
+          3000,
+        );
+      }
+
+      function switchTab(tabName) {
+        dom.tabContents.forEach((c) => c.classList.remove("active"));
+        dom.navButtons.forEach((b) => b.classList.remove("active"));
+        document.getElementById(tabName + "-content").classList.add("active");
+        document
+          .querySelector(`.nav-button[onclick="switchTab('${tabName}')"]`)
+          .classList.add("active");
+        if (tabName === "dashboard" && !chartLoaded) {
+          // Chỉ tải lại chart nếu chưa từng tải
+          drawChart();
+        }
+      }
+      function drawChart() {
+        dom.chartContainer.innerHTML = "<p>Đang tải dữ liệu...</p>";
+        google.script.run
+          .withSuccessHandler((response) => {
+            if (response.error) {
+              dom.chartContainer.innerHTML = `<p>${response.error}</p>`;
+              return;
+            }
+            if (response.chartData.length <= 1) {
+              dom.chartContainer.innerHTML = `<p>Không có dữ liệu chuyên cần để hiển thị.</p>`;
+              return;
+            }
+
+            const data = google.visualization.arrayToDataTable(
+              response.chartData,
+            );
+            const options = {
+              title: "Tỷ lệ chuyên cần theo môn học",
+              pieHole: 0.4,
+              legend: { position: "bottom" },
+            };
+            const chart = new google.visualization.PieChart(dom.chartContainer);
+            chart.draw(data, options);
+            chartLoaded = true; // Đánh dấu đã tải chart
+          })
+          .withFailureHandler((err) => {
+            dom.chartContainer.innerHTML = `<p>Lỗi khi vẽ biểu đồ: ${err.message}</p>`;
+          })
+          .controllers_Main_getDashboardData();
+      }
+
+      function renderStatus(value, textTrue, textFalse) {
+        const dotClass = value ? "dot-green" : "dot-red";
+        const text = value ? textTrue : textFalse;
+        return `<span class="status-dot ${dotClass}"></span> ${text}`;
+      }
+
+      function renderUI(status) {
+        dom.status.configured.innerHTML = renderStatus(
+          status.isConfigured,
+          "Đã cấu hình",
+          "Chưa cấu hình",
+        );
+        dom.status.initialized.innerHTML = renderStatus(
+          status.isInitialized,
+          "Đã khởi tạo",
+          "Chưa khởi tạo",
+        );
+        dom.status.autosync.innerHTML = renderStatus(
+          status.isAutoSyncActive,
+          "Đang hoạt động",
+          "Đã tạm dừng",
+        );
+        dom.buttons.manualSync.disabled = !status.isInitialized;
+
+        // Logic nút chính
+        if (!status.isConfigured) {
+          dom.buttons.mainAction.disabled = true;
+          dom.buttons.mainAction.textContent = "🚀 Vui lòng cấu hình";
+        } else {
+          dom.buttons.mainAction.disabled = false;
+          if (status.isInitialized) {
+            dom.buttons.mainAction.textContent = "🔄 Reset Hệ thống";
+            dom.buttons.mainAction.className = "btn btn-danger";
+          } else {
+            dom.buttons.mainAction.textContent = "🚀 Bắt đầu Khởi tạo";
+            dom.buttons.mainAction.className = "btn btn-primary";
+          }
+        }
+
+        // Logic nút Auto Sync
+        dom.buttons.toggleAutosync.disabled = !status.isInitialized;
+        if (status.isAutoSyncActive) {
+          dom.buttons.toggleAutosync.textContent =
+            "⏸️ Tạm dừng Đồng bộ Tự động";
+          dom.buttons.toggleAutosync.className = "btn btn-secondary";
+        } else {
+          dom.buttons.toggleAutosync.textContent =
+            "⚡ Kích hoạt Đồng bộ Tự động";
+          dom.buttons.toggleAutosync.className = "btn btn-success";
+        }
+      }
+
+      // --- Backend Communication ---
+      function handleFailure(err) {
+        showToast("Lỗi: " + err.message, true);
+        setLoading(false);
+      }
+
+      function refreshData() {
+        setLoading(true);
+        google.script.run
+          .withSuccessHandler((status) => {
+            renderUI(status);
+            google.script.run
+              .withSuccessHandler((settings) => {
+                Object.keys(dom.inputs).forEach((key) => {
+                  if (dom.inputs[key])
+                    dom.inputs[key].value = settings[key] || "";
+                });
+                setLoading(false);
+              })
+              .withFailureHandler(handleFailure)
+              .controllers_Main_getSettings();
+          })
+          .withFailureHandler(handleFailure)
+          .controllers_Main_getSystemStatus();
+      }
+
+      // --- Event Listeners ---
+      document.addEventListener("DOMContentLoaded", refreshData);
+
+      dom.buttons.mainAction.addEventListener("click", () => {
+        const isInitialized =
+          dom.buttons.mainAction.textContent.includes("Reset");
+        if (isInitialized) {
+          const choice = prompt(
+            "CẢNH BÁO RESET:\nNhập '1' để Reset An toàn (chỉ xóa sự kiện của hệ thống).\nNhập '2' để Reset Nhanh (xóa và tạo lại Calendar).\n\nHành động này không thể hoàn tác!",
+          );
+          if (choice === "1" || choice === "2") {
+            setLoading(true);
+            google.script.run
+              .withSuccessHandler((msg) => {
+                showToast(msg);
+                refreshData();
+              })
+              .withFailureHandler(handleFailure)
+              .controllers_Main_resetSystem(parseInt(choice));
+          }
+        } else {
+          if (confirm("Bạn có chắc muốn bắt đầu khởi tạo hệ thống?")) {
+            setLoading(true);
+            google.script.run
+              .withSuccessHandler((msg) => {
+                showToast(msg);
+                refreshData();
+              })
+              .withFailureHandler(handleFailure)
+              .controllers_Main_initializeSystem();
+          }
+        }
+      });
+
+      dom.buttons.toggleAutosync.addEventListener("click", () => {
+        const activate =
+          !dom.buttons.toggleAutosync.textContent.includes("Tạm dừng");
+        setLoading(true);
+        google.script.run
+          .withSuccessHandler((msg) => {
+            showToast(msg);
+            refreshData();
+          })
+          .withFailureHandler(handleFailure)
+          .controllers_Main_toggleAutoSync(activate);
+      });
+
+      dom.buttons.saveSettings.addEventListener("click", () => {
+        const settings = {};
+        Object.keys(dom.inputs).forEach((key) => {
+          if (dom.inputs[key]) settings[key] = dom.inputs[key].value;
+        });
+        setLoading(true);
+        google.script.run
+          .withSuccessHandler((msg) => {
+            showToast(msg);
+            refreshData();
+          })
+          .withFailureHandler(handleFailure)
+          .controllers_Main_saveSettings(settings);
+      });
+      dom.buttons.manualSync.addEventListener("click", () => {
+        if (confirm("Bạn có chắc muốn chạy Cập nhật Nhanh không?")) {
+          setLoading(true);
+          google.script.run
+            .withSuccessHandler((msg) => {
+              showToast(msg);
+              refreshData();
+            })
+            .withFailureHandler(handleFailure)
+            .controllers_Main_runIntelligentSync();
+        }
+      });
+
+      document.querySelectorAll(".accordion-header").forEach((header) => {
+        header.addEventListener("click", () => {
+          const content = header.nextElementSibling;
+          header.classList.toggle("active");
+          content.classList.toggle("show");
+          content.style.maxHeight = content.classList.contains("show")
+            ? content.scrollHeight + 20 + "px"
+            : null;
+        });
+      });
+    </script>
+  </body>
+</html>
