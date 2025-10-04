@@ -31,7 +31,7 @@ class GeminiService {
    * @param {Array<object>} deletedEvents - Danh sách các sự kiện đã bị hủy.
    * @returns {string} Nội dung email do AI tạo ra.
    */
-  static summarizeChanges(newEvents, deletedEvents) {
+  static summarizeChanges(newEvents, deletedEvents, tone = "friendly") {
     const properties = PropertiesService.getScriptProperties();
     const apiKey = properties.getProperty(
       SCRIPT_PROPERTIES_KEYS.GEMINI_API_KEY,
@@ -45,6 +45,15 @@ class GeminiService {
     const url =
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" +
       apiKey;
+    let promptIntro =
+      "Bạn là một trợ lý sinh viên thân thiện. Nhiệm vụ của bạn là viết một email thông báo về thay đổi lịch học.";
+    let greeting = "Chào bạn,";
+
+    if (tone === "direct") {
+      promptIntro =
+        "Bạn là một trợ lý thông tin. Nhiệm vụ của bạn là thông báo các thay đổi trong lịch học một cách trực tiếp, ngắn gọn và chính xác nhất.";
+      greeting = "Thông báo thay đổi lịch học:";
+    }
 
     // --- Xây dựng Prompt ---
     const addedText =
@@ -61,11 +70,15 @@ class GeminiService {
         : "";
 
     const prompt = `
-      Bạn là một trợ lý sinh viên thân thiện. Nhiệm vụ của bạn là viết một email thông báo về thay đổi lịch học.
+      ${promptIntro}
 
       **QUY TẮC BẮT BUỘC:**
-      1.  **ĐỊNH DẠNG ĐẦU RA:** Chỉ trả về văn bản thuần túy (plain text). TUYỆT ĐỐI KHÔNG sử dụng bất kỳ cú pháp Markdown nào (không có dấu *, #, -, hay bất kỳ định dạng nào khác).
-      2.  **GIỌNG VĂN:** Thân thiện, gần gũi như một người bạn. Bắt đầu bằng "Chào bạn,".
+        1.  **ĐỊNH DẠNG ĐẦU RA:** Chỉ trả về văn bản thuần túy (plain text). TUYỆT ĐỐI KHÔNG sử dụng bất kỳ cú pháp Markdown nào.
+      2.  **GIỌNG VĂN:** ${
+        tone === "friendly"
+          ? "Thân thiện, gần gũi như một người bạn."
+          : "Trực tiếp, đi thẳng vào vấn đề, không có lời chào hỏi rườm rà."
+      } Bắt đầu bằng "${greeting}".
       3.  **CẤU TRÚC:**
           - Nếu tổng số thay đổi (thêm + hủy) lớn hơn 5:
               a. Hãy liệt kê chi tiết các thay đổi diễn ra trong 7 ngày tới.

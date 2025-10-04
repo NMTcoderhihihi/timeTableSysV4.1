@@ -16,15 +16,23 @@ const SCRIPT_PROPERTIES_KEYS = {
   EMAIL: "EMAIL",
   SPREADSHEET_ID: "SPREADSHEET_ID",
   CALENDAR_ID: "CALENDAR_ID",
+  GEMINI_API_KEY: "GEMINI_API_KEY",
+  GEMINI_TONE: "GEMINI_TONE", // ++ ADDED
+  WEBAPP_URL: "WEBAPP_URL",
   // Cài đặt nâng cao
   PAGE_SIZE: "PAGE_SIZE",
   MAX_RETRIES: "MAX_RETRIES",
   RETRY_DELAY_SECONDS: "RETRY_DELAY_SECONDS",
-  SYNC_START_DATE: "SYNC_START_DATE", // ++ ADDED
+  SYNC_START_DATE: "SYNC_START_DATE",
+  EVENT_BATCH_SIZE: "EVENT_BATCH_SIZE", // ++ ADDED
+  BATCH_DELAY_MINUTES: "BATCH_DELAY_MINUTES", // ++ ADDED
   // Cài đặt trigger
   SYNC_TIMES: "SYNC_TIMES",
   IS_AUTO_SYNC_ACTIVE: "IS_AUTO_SYNC_ACTIVE",
-  GEMINI_API_KEY: "GEMINI_API_KEY",
+  // Khóa hệ thống & Hàng đợi
+  SYSTEM_LOCK: "SYSTEM_LOCK", // ++ ADDED
+  BATCH_QUEUE: "BATCH_QUEUE", // ++ ADDED
+  SYSTEM_STATE: "SYSTEM_STATE",
 };
 
 // =====================================================================================
@@ -41,11 +49,10 @@ const SHEET_NAMES = {
  * Thứ tự các cột ở đây sẽ quyết định thứ tự cột được tạo trên Google Sheet.
  */
 const SHEET_HEADERS = [
-  "eventHash", // Khóa chính, duy nhất cho mỗi buổi học
-  "googleCalendarEventId", // ID của sự kiện tương ứng trên Google Calendar
-  "daCheckIn", // Trạng thái check-in (TRUE, FALSE, hoặc rỗng)
-  "lastUpdated", // Dấu thời gian lần cập nhật cuối
-  // Dưới đây là các cột dữ liệu gốc từ API
+  "eventHash",
+  "googleCalendarEventId",
+  "daCheckIn",
+  "lastUpdated",
   "MaMonHoc",
   "TenMonHoc",
   "TenNhom",
@@ -58,8 +65,9 @@ const SHEET_HEADERS = [
   "GiaoVien",
   "SoTinChi",
   "MaLopHoc",
-  "Type", // 0 = Lý thuyết, 1 = Thực hành
-  "TinhTrang", // 0, 4, 5, 10 là các trạng thái hợp lệ
+  "Type",
+  "TinhTrang",
+  "calenType", // ++ ADDED
 ];
 
 // =====================================================================================
@@ -67,10 +75,12 @@ const SHEET_HEADERS = [
 // =====================================================================================
 
 const DEFAULT_SETTINGS = {
-  PAGE_SIZE: 100, // Số buổi học tải về trong mỗi lần gọi API
-  MAX_RETRIES: 3, // Số lần thử lại tối đa nếu gọi API thất bại
-  RETRY_DELAY_SECONDS: 10, // Thời gian chờ (giây) giữa các lần thử lại
-  SYNC_TIMES: JSON.stringify(["07:00", "12:00", "22:00"]), // Mặc định 3 thời điểm
+  PAGE_SIZE: 100,
+  MAX_RETRIES: 3,
+  RETRY_DELAY_SECONDS: 10,
+  SYNC_TIMES: JSON.stringify(["07:00", "12:00", "22:00"]),
+  EVENT_BATCH_SIZE: 40, // ++ ADDED: Mặc định 40 sự kiện/lô
+  BATCH_DELAY_MINUTES: 2, // ++ ADDED: Mặc định chờ 2 phút giữa các lô
 };
 
 // =====================================================================================
@@ -84,8 +94,9 @@ const API_URL = "https://tapi.lhu.edu.vn/calen/auth/XemLich_LichSinhVien";
  * Việc dùng hằng số giúp dễ quản lý khi đổi tên hàm.
  */
 const HANDLER_FUNCTIONS = {
-  AUTO_SYNC_TRIGGER: "controllers_Main_triggerHandler", // Hàm "gác cổng" cho trigger
-  INTELLIGENT_SYNC: "controllers_Main_runIntelligentSync", // Hàm xử lý sync chính
+  AUTO_SYNC_TRIGGER: "controllers_Main_triggerHandler",
+  INTELLIGENT_SYNC: "controllers_Main_runIntelligentSync",
+  PROCESS_BATCH: "controllers_Main_processEventBatch", // ++ ADDED
 };
 
 // Khoảng thời gian chạy của trigger (tính bằng phút).

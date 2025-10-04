@@ -151,8 +151,8 @@
   </head>
   <body>
     <div class="container">
-      <div id="loader" class="loader"></div>
-      <div id="main-content" class="card" style="display: none">
+      <div id="loader" class="loader" style="display: none"></div>
+      <div id="main-content" class="card" style="display: block">
         <h1 class="title" id="event-title">Đang tải...</h1>
         <p class="subtitle" id="event-time">Vui lòng chờ</p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0" />
@@ -173,6 +173,7 @@
     <script>
       // Dòng này rất quan trọng: lấy eventHash mà Code.gs đã truyền vào
       const eventHash = "<?!= eventHash ?>";
+      console.log("Checkin Page Loaded. Event Hash from URL:", eventHash); // ++ ADDED
 
       const dom = {
         loader: document.getElementById("loader"),
@@ -210,7 +211,10 @@
           }/${date.getFullYear()} lúc ${date
             .getHours()
             .toString()
-            .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+            .padStart(2, "0")}:${date
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`;
           dom.time.textContent = formattedDate;
         } catch (e) {
           dom.time.textContent = "Không rõ thời gian";
@@ -260,24 +264,22 @@
       }
 
       // --- Event Listeners ---
+      // ** MODIFIED: Hard-code dữ liệu để demo
       document.addEventListener("DOMContentLoaded", () => {
-        if (!eventHash) {
-          setLoading(false);
-          renderEvent({
-            error: "Không tìm thấy mã định danh sự kiện trong URL.",
-          });
-          return;
-        }
-        google.script.run
-          .withSuccessHandler((data) => {
-            setLoading(false);
-            renderEvent(data);
-          })
-          .withFailureHandler((err) => {
-            setLoading(false);
-            renderEvent({ error: "Lỗi giao tiếp với máy chủ: " + err.message });
-          })
-          .controllers_Checkin_getEventForCheckin(eventHash);
+        // DỮ LIỆU GIẢ ĐỂ DEMO
+        const fakeEventData = {
+          tenMonHoc: "Lập trình Web Nâng cao",
+          thoiGianBD: new Date().toISOString(), // Lấy thời gian hiện tại cho sinh động
+          tenPhong: "Phòng A.101",
+          daCheckIn: null, // Trạng thái ban đầu
+        };
+
+        // Tắt loader và hiển thị dữ liệu giả ngay lập tức
+        setLoading(false);
+        renderEvent(fakeEventData);
+
+        // Bạn vẫn có thể giữ logic gọi backend để khi demo xong có thể bật lại
+        // google.script.run... (đã bị vô hiệu hóa)
       });
 
       dom.btnPresent.addEventListener("click", () => setCheckinStatus(true));

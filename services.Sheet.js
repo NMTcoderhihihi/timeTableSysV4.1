@@ -12,11 +12,23 @@ class SheetService {
    * @returns {object | null} Đối tượng chứa dữ liệu của dòng nếu tìm thấy, ngược lại trả về null.
    */
   static findRowByHash(sheetName, hash) {
-    const spreadsheet = this._getSpreadsheet();
-    const sheet = this._getSheet(spreadsheet, sheetName);
-    const data = this.getAllData(sheetName); // Tận dụng hàm đã có
+    const data = this.getAllData(sheetName);
 
-    const eventData = data.find((row) => row.eventHash === hash);
+    // Thêm log để kiểm tra
+    Logger.log(
+      `findRowByHash: Đang tìm hash '${hash}' trong ${data.length} dòng của sheet '${sheetName}'.`,
+    );
+
+    const eventData = data.find(
+      (row) => String(row.eventHash).trim() === String(hash).trim(),
+    );
+
+    if (eventData) {
+      Logger.log(`findRowByHash: Đã tìm thấy dữ liệu cho hash: ${hash}`);
+    } else {
+      Logger.log(`findRowByHash: KHÔNG tìm thấy dữ liệu cho hash: ${hash}`);
+    }
+
     return eventData || null;
   }
 
@@ -234,25 +246,43 @@ class SheetService {
     Logger.log("SheetService: Bắt đầu quy trình tái tạo toàn bộ sheet...");
     const spreadsheet = this._getSpreadsheet();
     const allSheets = spreadsheet.getSheets();
+    let tempSheet = null;
 
-    if (allSheets.length > 0) {
-      // 1. Tạo sheet tạm để luôn có ít nhất 1 sheet tồn tại
-      const tempSheet = spreadsheet.insertSheet(`_temp_${Date.now()}`);
+    // 1. Tạo sheet tạm
+    try {
+      tempSheet = spreadsheet.insertSheet(`_temp_${Date.now()}`);
       Logger.log(`SheetService: Đã tạo sheet tạm: ${tempSheet.getName()}`);
+    } catch (e) {
+      Logger.log(
+        `Không thể tạo sheet tạm, có thể file đang trống. Bỏ qua. Lỗi: ${e.message}`,
+      );
+    }
 
-      // 2. Xóa tất cả các sheet khác
-      allSheets.forEach((sheet) => {
+    // 2. Xóa tất cả các sheet khác
+    allSheets.forEach((sheet) => {
+      // Kiểm tra để không xóa chính sheet tạm vừa tạo
+      if (tempSheet && sheet.getSheetId() !== tempSheet.getSheetId()) {
         Logger.log(`SheetService: Đang xóa sheet cũ: ${sheet.getName()}`);
         spreadsheet.deleteSheet(sheet);
-      });
+      } else if (!tempSheet && sheet.getName() === "Sheet1") {
+        // Trường hợp file mới chỉ có "Sheet1"
+        Logger.log(`SheetService: Đang xóa sheet mặc định: ${sheet.getName()}`);
+        spreadsheet.deleteSheet(sheet);
+      }
+    });
 
-      // 3. Tạo lại các sheet cần thiết (hàm _getSheet sẽ tự động làm việc này)
-      this._getSheet(spreadsheet, SHEET_NAMES.PROCESSED_SCHEDULE);
-      this._getSheet(spreadsheet, SHEET_NAMES.CURRENT_SCHEDULE);
+    // 3. Tạo lại các sheet cần thiết
+    this._getSheet(spreadsheet, SHEET_NAMES.PROCESSED_SCHEDULE);
+    this._getSheet(spreadsheet, SHEET_NAMES.CURRENT_SCHEDULE);
 
-      // 4. Xóa sheet tạm
-      spreadsheet.deleteSheet(tempSheet);
-      Logger.log("SheetService: Đã xóa sheet tạm.");
+    // 4. Xóa sheet tạm (nếu nó đã được tạo)
+    if (tempSheet) {
+      try {
+        spreadsheet.deleteSheet(tempSheet);
+        Logger.log("SheetService: Đã xóa sheet tạm thành công.");
+      } catch (e) {
+        Logger.log(`Lỗi khi xóa sheet tạm: ${e.message}`);
+      }
     }
 
     Logger.log("SheetService: Hoàn tất tái tạo cấu trúc sheet.");

@@ -5,10 +5,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bảng Điều Khiển</title>
-    <script
-      type="text/javascript"
-      src="https://www.gstatic.com/charts/loader.js"
-    ></script>
     <style>
       :root {
         --primary-color: #4285f4;
@@ -228,7 +224,7 @@
       .accordion-content.show {
         padding-bottom: 16px;
       }
-       .action-group {
+      .action-group {
         position: relative;
         margin-bottom: 10px;
       }
@@ -293,6 +289,44 @@
       .modal-body strong {
         color: var(--text-color);
       }
+      .progress-bar-container {
+        margin-bottom: 15px;
+      }
+      .progress-bar-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+      .progress-bar-subject {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-right: 10px;
+      }
+      .progress-bar-percentage {
+        color: var(--primary-color);
+      }
+      .progress-bar-bg {
+        width: 100%;
+        height: 12px;
+        background-color: #e0e0e0;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        width: 0%; /* Bắt đầu từ 0 */
+        background-color: var(--primary-color);
+        border-radius: 6px;
+        transition: width 1s ease-out; /* Hiệu ứng động */
+      }
+      .dashboard-summary {
+        font-size: 12px;
+        color: var(--text-light);
+        text-align: right;
+      }
     </style>
   </head>
   <body>
@@ -312,27 +346,42 @@
         <div class="card">
           <h2 class="card-title">Hành động</h2>
           <div class="action-group">
-          <button id="btn-main-action" class="btn btn-primary">
-            🚀 Bắt đầu Khởi tạo
-          </button>
+            <button id="btn-main-action" class="btn btn-primary">
+              🚀 Bắt đầu Khởi tạo
+            </button>
             <button class="help-btn" data-help="main">?</button>
           </div>
           <div class="action-group">
-          <button id="btn-manual-sync" class="btn btn-success">
-            🔄 Cập nhật Nhanh
-          </button>
+            <button id="btn-manual-sync" class="btn btn-success">
+              🔄 Cập nhật Nhanh
+            </button>
             <button class="help-btn" data-help="sync">?</button>
           </div>
           <div class="action-group">
-          <button id="btn-toggle-autosync" class="btn btn-secondary">
-            ⚡ Kích hoạt Đồng bộ Tự động
-          </button>
+            <button id="btn-toggle-autosync" class="btn btn-secondary">
+              ⚡ Kích hoạt Đồng bộ Tự động
+            </button>
             <button class="help-btn" data-help="autosync">?</button>
+          </div>
+        </div>
+        <div class="card" style="border: 2px solid var(--danger-color)">
+          <h2 class="card-title" style="color: var(--danger-color)">
+            Vùng Nguy hiểm
+          </h2>
+          <button id="btn-kill-system" class="btn btn-danger">
+            🔴 Dừng Khẩn cấp & Xóa sạch
+          </button>
+        </div>
       </div>
+
       <div id="dashboard-content" class="tab-content">
         <div class="card">
           <h2 class="card-title">Báo cáo Chuyên cần</h2>
-          <div id="chart-container"><p>Đang tải dữ liệu...</p></div>
+          <div id="dashboard-container">
+            <p style="text-align: center; color: var(--text-light)">
+              Vui lòng chuyển tab để tải báo cáo...
+            </p>
+          </div>
         </div>
       </div>
 
@@ -356,7 +405,7 @@
               <label>Calendar ID (tự động tạo/nhập)</label
               ><input type="text" id="calendarId" />
             </div>
-             <div class="form-group">
+            <div class="form-group">
               <label for="syncStartDate">Ngày bắt đầu Tạo lại/Khởi tạo</label>
               <input type="date" id="syncStartDate" />
               <p style="font-size: 12px; color: #757575; margin-top: 5px">
@@ -388,6 +437,41 @@
                 placeholder="Nhập API Key của bạn tại đây"
               />
             </div>
+            <div class="form-group">
+              <label for="geminiTone">Giọng văn của AI</label>
+              <select
+                id="geminiTone"
+                style="
+                  width: 100%;
+                  padding: 10px;
+                  border: 1px solid var(--border-color);
+                  border-radius: 6px;
+                  font-size: 16px;
+                "
+              >
+                <option value="friendly">Thân thiện, gần gũi</option>
+                <option value="direct">Trực tiếp, ngắn gọn</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>URL của Web App</label>
+              <input
+                type="url"
+                id="webappUrl"
+                placeholder="Để trống để dùng link tự động"
+              />
+              <p style="font-size: 12px; color: #757575; margin-top: 5px">
+                Hữu ích khi bạn dùng domain riêng.
+              </p>
+            </div>
+            <div class="form-group">
+              <label>Số sự kiện/lô (tối ưu hiệu suất)</label>
+              <input type="number" id="eventBatchSize" placeholder="40" />
+            </div>
+            <div class="form-group">
+              <label>Thời gian chờ giữa các lô (phút)</label>
+              <input type="number" id="batchDelayMinutes" placeholder="2" />
+            </div>
           </div>
         </div>
         <div class="card">
@@ -417,7 +501,7 @@
       </div>
     </div>
 
-     <div id="help-modal" class="modal-overlay">
+    <div id="help-modal" class="modal-overlay">
       <div class="modal-content">
         <h3 id="modal-title" class="modal-title">Tiêu đề</h3>
         <p id="modal-body" class="modal-body">Nội dung</p>
@@ -442,9 +526,6 @@
     </div>
 
     <script>
-      google.charts.load("current", { packages: ["corechart"] });
-     
-
       // --- DOM Elements ---
       const dom = {
         loader: document.getElementById("loader-overlay"),
@@ -461,10 +542,10 @@
           toggleAutosync: document.getElementById("btn-toggle-autosync"),
           manualSync: document.getElementById("btn-manual-sync"),
           saveSettings: document.getElementById("btn-save-settings"),
+          killSystem: document.getElementById("btn-kill-system"),
         },
-        chartContainer: document.getElementById("chart-container"),
+        chartContainer: document.getElementById("dashboard-container"),
         modal: {
-          // ++ ADDED
           overlay: document.getElementById("help-modal"),
           title: document.getElementById("modal-title"),
           body: document.getElementById("modal-body"),
@@ -478,15 +559,19 @@
           pageSize: document.getElementById("pageSize"),
           maxRetries: document.getElementById("maxRetries"),
           retryDelaySeconds: document.getElementById("retryDelaySeconds"),
-          syncStartDate: document.getElementById("syncStartDate"), // ++ ADDED
+          syncStartDate: document.getElementById("syncStartDate"),
+          eventBatchSize: document.getElementById("eventBatchSize"),
+          batchDelayMinutes: document.getElementById("batchDelayMinutes"),
           syncTime1: document.getElementById("syncTime1"),
           syncTime2: document.getElementById("syncTime2"),
           syncTime3: document.getElementById("syncTime3"),
           geminiApiKey: document.getElementById("geminiApiKey"),
+          geminiTone: document.getElementById("geminiTone"),
+          webappUrl: document.getElementById("webappUrl"),
         },
       };
       let toastTimeout;
-      let chartLoaded = false; // Biến cờ để chỉ vẽ biểu đồ một lần
+      let chartLoaded = false;
 
       // --- UI Logic ---
       function setLoading(isLoading) {
@@ -514,49 +599,67 @@
           .querySelector(`.nav-button[onclick="switchTab('${tabName}')"]`)
           .classList.add("active");
         if (tabName === "dashboard" && !chartLoaded) {
-          // Chỉ tải lại chart nếu chưa từng tải
-          drawChart();
+          renderDashboard(); // ** MODIFIED: Gọi hàm mới
         }
       }
-      function drawChart() {
-        if (chartLoaded) return; // Prevent re-drawing
-        dom.chartContainer.innerHTML =
-          '<div class="loader" style="margin: auto;"></div>'; // Show loader
-        google.script.run
-          .withSuccessHandler((response) => {
-            if (response.error) {
-              dom.chartContainer.innerHTML = `<p style="text-align: center; color: var(--text-light);">${response.error}</p>`;
-              return;
-            }
-            if (!response.chartData || response.chartData.length <= 1) {
-              dom.chartContainer.innerHTML = `<p style="text-align: center; color: var(--text-light);">Không có dữ liệu chuyên cần để hiển thị.</p>`;
-              return;
-            }
-            try {
-            const data = google.visualization.arrayToDataTable(
-              response.chartData,
-            );
-            const options = {
-              title: "Tỷ lệ chuyên cần theo môn học",
-              pieHole: 0.4,
-              legend: { position: "bottom" },
-                chartArea: { width: "90%", height: "80%" },
-            };
-              const chart = new google.visualization.PieChart(
-                dom.chartContainer,
-              );
-            chart.draw(data, options);
-              chartLoaded = true;
-            } catch (e) {
-              dom.chartContainer.innerHTML = `<p>Lỗi khi vẽ biểu đồ: ${e.message}</p>`;
-            }
-          })
-          .withFailureHandler((err) => {
-            dom.chartContainer.innerHTML = `<p>Lỗi khi tải dữ liệu biểu đồ: ${err.message}</p>`;
-          })
-          .controllers_Main_getDashboardData();
-      }
 
+      // ** MODIFIED: Viết lại hoàn toàn hàm vẽ biểu đồ
+     function renderDashboard() {
+    if (chartLoaded) return;
+    dom.chartContainer.innerHTML = ""; // Xóa chữ "Đang tải..."
+
+    // DỮ LIỆU GIẢ ĐỂ DEMO
+    const fakeDashboardData = [
+      {
+        subject: "An toàn và Bảo mật Hệ thống",
+        total: 15,
+        present: 14,
+        absent: 1,
+        rate: 93,
+      },
+      {
+        subject: "Phát triển Ứng dụng Di động",
+        total: 15,
+        present: 12,
+        absent: 3,
+        rate: 80,
+      },
+      {
+        subject: "Trí tuệ Nhân tạo",
+        total: 10,
+        present: 10,
+        absent: 0,
+        rate: 100,
+      },
+      {
+        subject: "Mạng Máy tính Nâng cao",
+        total: 10,
+        present: 7,
+        absent: 3,
+        rate: 70,
+      },
+    ];
+
+    fakeDashboardData.forEach((item) => {
+      const elementHTML = `
+            <div class="progress-bar-container">
+                <div class="progress-bar-label">
+                <span class="progress-bar-subject">${item.subject}</span>
+                <span class="progress-bar-percentage">${item.rate}%</span>
+                </div>
+                <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: ${item.rate}%;"></div>
+                </div>
+                <div class="dashboard-summary">
+                Có mặt: ${item.present} / Vắng: ${item.absent} / Tổng: ${item.total}
+                </div>
+            </div>
+            `;
+      dom.chartContainer.insertAdjacentHTML("beforeend", elementHTML);
+    });
+
+    chartLoaded = true;
+  }
       function renderStatus(value, textTrue, textFalse) {
         const dotClass = value ? "dot-green" : "dot-red";
         const text = value ? textTrue : textFalse;
@@ -607,6 +710,22 @@
             "⚡ Kích hoạt Đồng bộ Tự động";
           dom.buttons.toggleAutosync.className = "btn btn-success";
         }
+        const isProcessing = status.isProcessing;
+
+        if (isProcessing) {
+          dom.status.configured.innerHTML +=
+            ' <span style="color: var(--danger-color); font-weight: bold;">(Đang xử lý...)</span>';
+        }
+
+        // Vô hiệu hóa tất cả các nút hành động nguy hiểm nếu đang xử lý
+        dom.buttons.mainAction.disabled = isProcessing || !status.isConfigured;
+        dom.buttons.manualSync.disabled = isProcessing || !status.isInitialized;
+        dom.buttons.toggleAutosync.disabled =
+          isProcessing || !status.isInitialized;
+        dom.buttons.saveSettings.disabled = isProcessing; // Nút Lưu Cài đặt cũng bị khóa
+
+        // Nút Dừng khẩn cấp không bao giờ bị khóa
+        dom.buttons.killSystem.disabled = false;
       }
 
       // --- Backend Communication ---
@@ -666,7 +785,7 @@
       // --- Event Listeners ---
       document.addEventListener("DOMContentLoaded", refreshData);
 
-       document.querySelectorAll(".help-btn").forEach((btn) => {
+      document.querySelectorAll(".help-btn").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           showHelpModal(e.target.dataset.help);
         });
@@ -746,6 +865,21 @@
             })
             .withFailureHandler(handleFailure)
             .controllers_Main_runIntelligentSync();
+        }
+      });
+      dom.buttons.killSystem.addEventListener("click", () => {
+        const confirmation = prompt(
+          "CẢNH BÁO CỰC KỲ NGUY HIỂM!\nHành động này sẽ dừng mọi hoạt động, xóa tất cả trigger và đưa hệ thống về trạng thái ban đầu. Dữ liệu Calendar và Sheet có thể bị xóa.\n\nNhập 'DELETE' để xác nhận.",
+        );
+        if (confirmation === "DELETE") {
+          setLoading(true);
+          google.script.run
+            .withSuccessHandler((msg) => {
+              showToast(msg);
+              refreshData(); // Tải lại trạng thái mới
+            })
+            .withFailureHandler(handleFailure)
+            .controllers_Main_forceKillSystem();
         }
       });
 
