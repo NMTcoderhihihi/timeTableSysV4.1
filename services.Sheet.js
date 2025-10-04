@@ -5,7 +5,6 @@
  */
 
 class SheetService {
-
   /**
    * Tìm một dòng trong sheet dựa trên eventHash và trả về dữ liệu của dòng đó.
    * @param {string} sheetName - Tên sheet cần tìm.
@@ -16,8 +15,8 @@ class SheetService {
     const spreadsheet = this._getSpreadsheet();
     const sheet = this._getSheet(spreadsheet, sheetName);
     const data = this.getAllData(sheetName); // Tận dụng hàm đã có
-    
-    const eventData = data.find(row => row.eventHash === hash);
+
+    const eventData = data.find((row) => row.eventHash === hash);
     return eventData || null;
   }
 
@@ -35,12 +34,14 @@ class SheetService {
     const range = sheet.getDataRange();
     const values = range.getValues();
     const headers = values[0];
-    
-    const hashColumnIndex = headers.indexOf('eventHash');
+
+    const hashColumnIndex = headers.indexOf("eventHash");
     const targetColumnIndex = headers.indexOf(headerToUpdate);
 
     if (hashColumnIndex === -1 || targetColumnIndex === -1) {
-      Logger.log(`Lỗi: Không tìm thấy cột 'eventHash' hoặc '${headerToUpdate}' trong sheet.`);
+      Logger.log(
+        `Lỗi: Không tìm thấy cột 'eventHash' hoặc '${headerToUpdate}' trong sheet.`,
+      );
       return false;
     }
 
@@ -49,11 +50,15 @@ class SheetService {
         // Tìm thấy dòng, cập nhật giá trị. i + 1 vì index của mảng bắt đầu từ 0, row của sheet bắt đầu từ 1.
         sheet.getRange(i + 1, targetColumnIndex + 1).setValue(newValue);
         // Cập nhật thêm timestamp
-        const timestampColumnIndex = headers.indexOf('lastUpdated');
+        const timestampColumnIndex = headers.indexOf("lastUpdated");
         if (timestampColumnIndex !== -1) {
-          sheet.getRange(i + 1, timestampColumnIndex + 1).setValue(new Date().toISOString());
+          sheet
+            .getRange(i + 1, timestampColumnIndex + 1)
+            .setValue(new Date().toISOString());
         }
-        Logger.log(`Đã cập nhật cột '${headerToUpdate}' cho hash ${hash} thành công.`);
+        Logger.log(
+          `Đã cập nhật cột '${headerToUpdate}' cho hash ${hash} thành công.`,
+        );
         return true;
       }
     }
@@ -69,34 +74,58 @@ class SheetService {
    */
   static _getSpreadsheet() {
     const properties = PropertiesService.getScriptProperties();
-    const spreadsheetId = properties.getProperty(SCRIPT_PROPERTIES_KEYS.SPREADSHEET_ID);
-    const studentId = properties.getProperty(SCRIPT_PROPERTIES_KEYS.STUDENT_ID) || 'Unknown';
+    const spreadsheetId = properties.getProperty(
+      SCRIPT_PROPERTIES_KEYS.SPREADSHEET_ID,
+    );
 
     if (spreadsheetId) {
       try {
         const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
         // Thử một hành động nhỏ để chắc chắn có quyền truy cập
-        spreadsheet.getName(); 
-        Logger.log(`SheetService: Đã truy cập thành công Spreadsheet ID: ${spreadsheetId}`);
+        spreadsheet.getName();
+        Logger.log(
+          `SheetService: Đã truy cập thành công Spreadsheet ID: ${spreadsheetId}`,
+        );
         return spreadsheet;
       } catch (e) {
-        Logger.log(`SheetService: LỖI - Không thể truy cập Spreadsheet ID ${spreadsheetId}. Lỗi: ${e.message}. Sẽ tạo file mới.`);
+        Logger.log(
+          `SheetService: LỖI - Không thể truy cập Spreadsheet ID ${spreadsheetId}. Lỗi: ${e.message}. Sẽ tạo file mới.`,
+        );
       }
     }
 
-    // Nếu không có ID hoặc truy cập lỗi, tạo file mới
-    Logger.log('SheetService: Đang tạo file Spreadsheet mới...');
-    const newSpreadsheet = SpreadsheetApp.create(`TimetableSys_DB (${studentId})`);
+    Logger.log("SheetService: Đang tạo file Spreadsheet mới...");
+    const studentId =
+      PropertiesService.getScriptProperties().getProperty(
+        SCRIPT_PROPERTIES_KEYS.STUDENT_ID,
+      ) || "Unknown";
+    const newSpreadsheet = SpreadsheetApp.create(
+      `TimetableSys_DB (${studentId})`,
+    );
     const newId = newSpreadsheet.getId();
     properties.setProperty(SCRIPT_PROPERTIES_KEYS.SPREADSHEET_ID, newId);
     Logger.log(`SheetService: Đã tạo và lưu Spreadsheet mới với ID: ${newId}`);
-    
-    // Xóa sheet mặc định 'Sheet1'
-    const defaultSheet = newSpreadsheet.getSheetByName('Sheet1');
+
+    // ++ ADDED: Logic di chuyển file vào cùng thư mục với script
+    try {
+      const scriptFile = DriveApp.getFileById(ScriptApp.getScriptId());
+      const scriptFolder = scriptFile.getParents().next(); // Lấy thư mục cha đầu tiên
+      const spreadsheetFile = DriveApp.getFileById(newId);
+      spreadsheetFile.moveTo(scriptFolder);
+      Logger.log(
+        `SheetService: Đã di chuyển Spreadsheet vào thư mục: '${scriptFolder.getName()}'`,
+      );
+    } catch (e) {
+      Logger.log(
+        `SheetService: Lỗi khi di chuyển file Spreadsheet. Bỏ qua. Chi tiết: ${e.message}`,
+      );
+    }
+
+    const defaultSheet = newSpreadsheet.getSheetByName("Sheet1");
     if (defaultSheet) {
       newSpreadsheet.deleteSheet(defaultSheet);
     }
-    
+
     return newSpreadsheet;
   }
 
@@ -127,10 +156,12 @@ class SheetService {
    */
   static writeToSheet(sheetName, dataObjects) {
     if (!dataObjects || dataObjects.length === 0) {
-      Logger.log(`SheetService: Không có dữ liệu để ghi vào '${sheetName}'. Bỏ qua.`);
+      Logger.log(
+        `SheetService: Không có dữ liệu để ghi vào '${sheetName}'. Bỏ qua.`,
+      );
       return;
     }
-    
+
     const spreadsheet = this._getSpreadsheet();
     const sheet = this._getSheet(spreadsheet, sheetName);
 
@@ -138,11 +169,17 @@ class SheetService {
     this.clearSheet(sheetName);
 
     // Chuyển đổi mảng đối tượng thành mảng 2D để ghi
-    const dataRange = dataObjects.map(obj => SHEET_HEADERS.map(header => obj[header] || ""));
-    
+    const dataRange = dataObjects.map((obj) =>
+      SHEET_HEADERS.map((header) => obj[header] || ""),
+    );
+
     // Ghi dữ liệu mới
-    sheet.getRange(2, 1, dataRange.length, dataRange[0].length).setValues(dataRange);
-    Logger.log(`SheetService: Đã ghi thành công ${dataRange.length} dòng vào sheet '${sheetName}'.`);
+    sheet
+      .getRange(2, 1, dataRange.length, dataRange[0].length)
+      .setValues(dataRange);
+    Logger.log(
+      `SheetService: Đã ghi thành công ${dataRange.length} dòng vào sheet '${sheetName}'.`,
+    );
   }
 
   /**
@@ -155,7 +192,11 @@ class SheetService {
     const lastRow = sheet.getLastRow();
     if (lastRow > 1) {
       sheet.deleteRows(2, lastRow - 1);
-      Logger.log(`SheetService: Đã xóa ${lastRow - 1} dòng dữ liệu trong sheet '${sheetName}'.`);
+      Logger.log(
+        `SheetService: Đã xóa ${
+          lastRow - 1
+        } dòng dữ liệu trong sheet '${sheetName}'.`,
+      );
     }
   }
 
@@ -174,8 +215,8 @@ class SheetService {
     const range = sheet.getRange(1, 1, lastRow, sheet.getLastColumn());
     const values = range.getValues();
     const headers = values.shift(); // Lấy dòng đầu tiên làm header
-    
-    return values.map(row => {
+
+    return values.map((row) => {
       const obj = {};
       headers.forEach((header, index) => {
         obj[header] = row[index];
@@ -185,14 +226,36 @@ class SheetService {
   }
 
   /**
-   * Xóa sạch dữ liệu trong cả hai sheet chính của hệ thống.
+   * Xóa sạch dữ liệu và cấu trúc sheet, sau đó tạo lại từ đầu.
    * Thường được dùng trong quá trình Reset.
+   * ** MODIFIED: Logic được viết lại hoàn toàn để tránh lỗi không thể xóa hết sheet.
    */
   static clearAllData() {
-    Logger.log('SheetService: Bắt đầu xóa dữ liệu trên cả 2 sheet...');
-    this.clearSheet(SHEET_NAMES.PROCESSED_SCHEDULE);
-    this.clearSheet(SHEET_NAMES.CURRENT_SCHEDULE);
-    Logger.log('SheetService: Đã xóa xong dữ liệu trên cả 2 sheet.');
+    Logger.log("SheetService: Bắt đầu quy trình tái tạo toàn bộ sheet...");
+    const spreadsheet = this._getSpreadsheet();
+    const allSheets = spreadsheet.getSheets();
+
+    if (allSheets.length > 0) {
+      // 1. Tạo sheet tạm để luôn có ít nhất 1 sheet tồn tại
+      const tempSheet = spreadsheet.insertSheet(`_temp_${Date.now()}`);
+      Logger.log(`SheetService: Đã tạo sheet tạm: ${tempSheet.getName()}`);
+
+      // 2. Xóa tất cả các sheet khác
+      allSheets.forEach((sheet) => {
+        Logger.log(`SheetService: Đang xóa sheet cũ: ${sheet.getName()}`);
+        spreadsheet.deleteSheet(sheet);
+      });
+
+      // 3. Tạo lại các sheet cần thiết (hàm _getSheet sẽ tự động làm việc này)
+      this._getSheet(spreadsheet, SHEET_NAMES.PROCESSED_SCHEDULE);
+      this._getSheet(spreadsheet, SHEET_NAMES.CURRENT_SCHEDULE);
+
+      // 4. Xóa sheet tạm
+      spreadsheet.deleteSheet(tempSheet);
+      Logger.log("SheetService: Đã xóa sheet tạm.");
+    }
+
+    Logger.log("SheetService: Hoàn tất tái tạo cấu trúc sheet.");
   }
 
   /**
@@ -205,7 +268,7 @@ class SheetService {
     const allData = this.getAllData(sheetName);
     const now = new Date();
     const hashes = new Set();
-    
+
     for (const row of allData) {
       const eventDate = new Date(row.ThoiGianBD);
       if (eventDate > now) {
@@ -229,26 +292,30 @@ class SheetService {
     const values = range.getValues();
     const headers = values[0];
 
-    const hashColIdx = headers.indexOf('eventHash');
-    const eventIdColIdx = headers.indexOf('googleCalendarEventId');
-    const updatedTimestampColIdx = headers.indexOf('lastUpdated');
+    const hashColIdx = headers.indexOf("eventHash");
+    const eventIdColIdx = headers.indexOf("googleCalendarEventId");
+    const updatedTimestampColIdx = headers.indexOf("lastUpdated");
 
     if (hashColIdx === -1 || eventIdColIdx === -1) return;
 
-    const updatesMap = new Map(updates.map(u => [u.eventHash, u.newEventId]));
+    const updatesMap = new Map(updates.map((u) => [u.eventHash, u.newEventId]));
     let changesMade = 0;
 
     for (let i = 1; i < values.length; i++) {
       const hash = values[i][hashColIdx];
       if (updatesMap.has(hash)) {
         sheet.getRange(i + 1, eventIdColIdx + 1).setValue(updatesMap.get(hash));
-        if(updatedTimestampColIdx !== -1) {
-            sheet.getRange(i + 1, updatedTimestampColIdx + 1).setValue(new Date().toISOString());
+        if (updatedTimestampColIdx !== -1) {
+          sheet
+            .getRange(i + 1, updatedTimestampColIdx + 1)
+            .setValue(new Date().toISOString());
         }
         changesMade++;
       }
     }
-    Logger.log(`SheetService: Đã cập nhật ${changesMade} googleCalendarEventId vào sheet '${sheetName}'.`);
+    Logger.log(
+      `SheetService: Đã cập nhật ${changesMade} googleCalendarEventId vào sheet '${sheetName}'.`,
+    );
   }
 
   /**
@@ -257,34 +324,52 @@ class SheetService {
    */
   static commitChanges() {
     const spreadsheet = this._getSpreadsheet();
-    const processedSheet = this._getSheet(spreadsheet, SHEET_NAMES.PROCESSED_SCHEDULE);
+    const processedSheet = this._getSheet(
+      spreadsheet,
+      SHEET_NAMES.PROCESSED_SCHEDULE,
+    );
     const currentSheetData = this.getAllData(SHEET_NAMES.CURRENT_SCHEDULE);
     const now = new Date();
 
     // 1. Xóa các sự kiện tương lai trong LichHoc_DaXuLy
     const processedRange = processedSheet.getDataRange();
     const processedValues = processedRange.getValues();
-    const timeColIdx = processedValues[0].indexOf('ThoiGianBD');
+    const timeColIdx = processedValues[0].indexOf("ThoiGianBD");
     const rowsToDelete = [];
 
     for (let i = processedValues.length - 1; i >= 1; i--) {
-        const eventDate = new Date(processedValues[i][timeColIdx]);
-        if (eventDate > now) {
-            rowsToDelete.push(i + 1);
-        }
+      const eventDate = new Date(processedValues[i][timeColIdx]);
+      if (eventDate > now) {
+        rowsToDelete.push(i + 1);
+      }
     }
-    
+
     // Sắp xếp ngược để xóa từ dưới lên không bị lỗi index
-    rowsToDelete.sort((a, b) => b - a).forEach(rowNum => processedSheet.deleteRow(rowNum));
-     Logger.log(`SheetService (Commit): Đã xóa ${rowsToDelete.length} sự kiện tương lai cũ khỏi '${SHEET_NAMES.PROCESSED_SCHEDULE}'.`);
+    rowsToDelete
+      .sort((a, b) => b - a)
+      .forEach((rowNum) => processedSheet.deleteRow(rowNum));
+    Logger.log(
+      `SheetService (Commit): Đã xóa ${rowsToDelete.length} sự kiện tương lai cũ khỏi '${SHEET_NAMES.PROCESSED_SCHEDULE}'.`,
+    );
 
     // 2. Nối dữ liệu từ LichHoc_HienTai vào LichHoc_DaXuLy
     if (currentSheetData.length > 0) {
-      const dataToAppend = currentSheetData.map(obj => SHEET_HEADERS.map(header => obj[header] || ""));
-      processedSheet.getRange(processedSheet.getLastRow() + 1, 1, dataToAppend.length, dataToAppend[0].length).setValues(dataToAppend);
-      Logger.log(`SheetService (Commit): Đã sao chép ${dataToAppend.length} sự kiện mới từ '${SHEET_NAMES.CURRENT_SCHEDULE}' vào '${SHEET_NAMES.PROCESSED_SCHEDULE}'.`);
+      const dataToAppend = currentSheetData.map((obj) =>
+        SHEET_HEADERS.map((header) => obj[header] || ""),
+      );
+      processedSheet
+        .getRange(
+          processedSheet.getLastRow() + 1,
+          1,
+          dataToAppend.length,
+          dataToAppend[0].length,
+        )
+        .setValues(dataToAppend);
+      Logger.log(
+        `SheetService (Commit): Đã sao chép ${dataToAppend.length} sự kiện mới từ '${SHEET_NAMES.CURRENT_SCHEDULE}' vào '${SHEET_NAMES.PROCESSED_SCHEDULE}'.`,
+      );
     }
-    
+
     // 3. Xóa sạch sheet tạm
     this.clearSheet(SHEET_NAMES.CURRENT_SCHEDULE);
   }

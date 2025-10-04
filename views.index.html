@@ -228,6 +228,71 @@
       .accordion-content.show {
         padding-bottom: 16px;
       }
+       .action-group {
+        position: relative;
+        margin-bottom: 10px;
+      }
+      .help-btn {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #e0e0e0;
+        color: #757575;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        line-height: 24px;
+        text-align: center;
+      }
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 3000;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .modal-overlay.show {
+        display: flex;
+        opacity: 1;
+      }
+      .modal-content {
+        background-color: white;
+        padding: 24px;
+        border-radius: 12px;
+        max-width: 90%;
+        width: 350px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        transform: scale(0.9);
+        transition: transform 0.3s;
+      }
+      .modal-overlay.show .modal-content {
+        transform: scale(1);
+      }
+      .modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 10px 0;
+      }
+      .modal-body {
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--text-light);
+        margin-bottom: 20px;
+      }
+      .modal-body strong {
+        color: var(--text-color);
+      }
     </style>
   </head>
   <body>
@@ -246,16 +311,23 @@
         </div>
         <div class="card">
           <h2 class="card-title">Hành động</h2>
+          <div class="action-group">
           <button id="btn-main-action" class="btn btn-primary">
             🚀 Bắt đầu Khởi tạo
           </button>
+            <button class="help-btn" data-help="main">?</button>
+          </div>
+          <div class="action-group">
           <button id="btn-manual-sync" class="btn btn-success">
             🔄 Cập nhật Nhanh
           </button>
+            <button class="help-btn" data-help="sync">?</button>
+          </div>
+          <div class="action-group">
           <button id="btn-toggle-autosync" class="btn btn-secondary">
             ⚡ Kích hoạt Đồng bộ Tự động
           </button>
-        </div>
+            <button class="help-btn" data-help="autosync">?</button>
       </div>
       <div id="dashboard-content" class="tab-content">
         <div class="card">
@@ -284,6 +356,13 @@
               <label>Calendar ID (tự động tạo/nhập)</label
               ><input type="text" id="calendarId" />
             </div>
+             <div class="form-group">
+              <label for="syncStartDate">Ngày bắt đầu Tạo lại/Khởi tạo</label>
+              <input type="date" id="syncStartDate" />
+              <p style="font-size: 12px; color: #757575; margin-top: 5px">
+                Để trống sẽ lấy ngày hiện tại.
+              </p>
+            </div>
           </div>
         </div>
         <div class="card">
@@ -302,9 +381,13 @@
               ><input type="number" id="retryDelaySeconds" placeholder="10" />
             </div>
             <div class="form-group">
-  <label>Gemini API Key</label>
-  <input type="password" id="geminiApiKey" placeholder="Nhập API Key của bạn tại đây" />
-</div>
+              <label>Gemini API Key</label>
+              <input
+                type="password"
+                id="geminiApiKey"
+                placeholder="Nhập API Key của bạn tại đây"
+              />
+            </div>
           </div>
         </div>
         <div class="card">
@@ -334,6 +417,14 @@
       </div>
     </div>
 
+     <div id="help-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h3 id="modal-title" class="modal-title">Tiêu đề</h3>
+        <p id="modal-body" class="modal-body">Nội dung</p>
+        <button id="modal-close" class="btn btn-primary">Đã hiểu</button>
+      </div>
+    </div>
+
     <nav class="bottom-nav">
       <button class="nav-button active" onclick="switchTab('controls')">
         <span class="icon">🕹️</span>Bảng điều khiển
@@ -352,7 +443,7 @@
 
     <script>
       google.charts.load("current", { packages: ["corechart"] });
-      google.charts.setOnLoadCallback(drawChart); // Đăng ký hàm vẽ sau khi thư viện tải xong
+     
 
       // --- DOM Elements ---
       const dom = {
@@ -372,6 +463,13 @@
           saveSettings: document.getElementById("btn-save-settings"),
         },
         chartContainer: document.getElementById("chart-container"),
+        modal: {
+          // ++ ADDED
+          overlay: document.getElementById("help-modal"),
+          title: document.getElementById("modal-title"),
+          body: document.getElementById("modal-body"),
+          close: document.getElementById("modal-close"),
+        },
         inputs: {
           studentId: document.getElementById("studentId"),
           email: document.getElementById("email"),
@@ -380,10 +478,11 @@
           pageSize: document.getElementById("pageSize"),
           maxRetries: document.getElementById("maxRetries"),
           retryDelaySeconds: document.getElementById("retryDelaySeconds"),
+          syncStartDate: document.getElementById("syncStartDate"), // ++ ADDED
           syncTime1: document.getElementById("syncTime1"),
           syncTime2: document.getElementById("syncTime2"),
           syncTime3: document.getElementById("syncTime3"),
-            geminiApiKey: document.getElementById("geminiApiKey"),
+          geminiApiKey: document.getElementById("geminiApiKey"),
         },
       };
       let toastTimeout;
@@ -420,18 +519,20 @@
         }
       }
       function drawChart() {
-        dom.chartContainer.innerHTML = "<p>Đang tải dữ liệu...</p>";
+        if (chartLoaded) return; // Prevent re-drawing
+        dom.chartContainer.innerHTML =
+          '<div class="loader" style="margin: auto;"></div>'; // Show loader
         google.script.run
           .withSuccessHandler((response) => {
             if (response.error) {
-              dom.chartContainer.innerHTML = `<p>${response.error}</p>`;
+              dom.chartContainer.innerHTML = `<p style="text-align: center; color: var(--text-light);">${response.error}</p>`;
               return;
             }
-            if (response.chartData.length <= 1) {
-              dom.chartContainer.innerHTML = `<p>Không có dữ liệu chuyên cần để hiển thị.</p>`;
+            if (!response.chartData || response.chartData.length <= 1) {
+              dom.chartContainer.innerHTML = `<p style="text-align: center; color: var(--text-light);">Không có dữ liệu chuyên cần để hiển thị.</p>`;
               return;
             }
-
+            try {
             const data = google.visualization.arrayToDataTable(
               response.chartData,
             );
@@ -439,13 +540,19 @@
               title: "Tỷ lệ chuyên cần theo môn học",
               pieHole: 0.4,
               legend: { position: "bottom" },
+                chartArea: { width: "90%", height: "80%" },
             };
-            const chart = new google.visualization.PieChart(dom.chartContainer);
+              const chart = new google.visualization.PieChart(
+                dom.chartContainer,
+              );
             chart.draw(data, options);
-            chartLoaded = true; // Đánh dấu đã tải chart
+              chartLoaded = true;
+            } catch (e) {
+              dom.chartContainer.innerHTML = `<p>Lỗi khi vẽ biểu đồ: ${e.message}</p>`;
+            }
           })
           .withFailureHandler((err) => {
-            dom.chartContainer.innerHTML = `<p>Lỗi khi vẽ biểu đồ: ${err.message}</p>`;
+            dom.chartContainer.innerHTML = `<p>Lỗi khi tải dữ liệu biểu đồ: ${err.message}</p>`;
           })
           .controllers_Main_getDashboardData();
       }
@@ -528,8 +635,48 @@
           .controllers_Main_getSystemStatus();
       }
 
+      const helpContent = {
+        main: {
+          title: "Khởi tạo / Reset Hệ thống",
+          body: "<strong>Khởi tạo:</strong> Dành cho lần chạy đầu tiên. Nút này sẽ tải toàn bộ lịch học (từ ngày bạn chọn trong Cài đặt) và tạo mới trong Google Sheet & Calendar.<br><br><strong>Reset:</strong> Xóa sạch dữ liệu cũ và chạy lại quá trình khởi tạo. <strong>CẢNH BÁO:</strong> Mọi dữ liệu check-in sẽ bị mất.",
+        },
+        sync: {
+          title: "Cập nhật Nhanh",
+          body: "Nút này sẽ chỉ quét các thay đổi (thêm mới/hủy bỏ) của các buổi học <strong>trong tương lai</strong> so với lần đồng bộ trước. Đây là cách an toàn và nhanh chóng để cập nhật lịch học hàng ngày.",
+        },
+        autosync: {
+          title: "Đồng bộ Tự động",
+          body: 'Kích hoạt tính năng này sẽ để hệ thống tự động chạy "Cập nhật Nhanh" vào các thời điểm bạn đã đặt trong Cài đặt. Bạn nên kích hoạt tính năng này để không bỏ lỡ các thay đổi.',
+        },
+      };
+
+      function showHelpModal(type) {
+        const content = helpContent[type];
+        if (content) {
+          dom.modal.title.textContent = content.title;
+          dom.modal.body.innerHTML = content.body;
+          dom.modal.overlay.classList.add("show");
+        }
+      }
+
+      function hideHelpModal() {
+        dom.modal.overlay.classList.remove("show");
+      }
+
       // --- Event Listeners ---
       document.addEventListener("DOMContentLoaded", refreshData);
+
+       document.querySelectorAll(".help-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          showHelpModal(e.target.dataset.help);
+        });
+      });
+      dom.modal.close.addEventListener("click", hideHelpModal);
+      dom.modal.overlay.addEventListener("click", (e) => {
+        if (e.target === dom.modal.overlay) {
+          hideHelpModal();
+        }
+      });
 
       dom.buttons.mainAction.addEventListener("click", () => {
         const isInitialized =

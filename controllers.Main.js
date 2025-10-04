@@ -51,6 +51,8 @@ function controllers_Main_getSettings() {
     syncTime1: syncTimes[0] || "",
     syncTime2: syncTimes[1] || "",
     syncTime3: syncTimes[2] || "",
+    syncStartDate:
+      properties.getProperty(SCRIPT_PROPERTIES_KEYS.SYNC_START_DATE) || "", // ++ ADDED
     geminiApiKey:
       properties.getProperty(SCRIPT_PROPERTIES_KEYS.GEMINI_API_KEY) || "",
   };
@@ -78,6 +80,7 @@ function controllers_Main_saveSettings(settings) {
     [SCRIPT_PROPERTIES_KEYS.RETRY_DELAY_SECONDS]:
       settings.retryDelaySeconds || DEFAULT_SETTINGS.RETRY_DELAY_SECONDS,
     [SCRIPT_PROPERTIES_KEYS.SYNC_TIMES]: JSON.stringify(syncTimes),
+    [SCRIPT_PROPERTIES_KEYS.SYNC_START_DATE]: settings.syncStartDate || "", // ++ ADDED
     [SCRIPT_PROPERTIES_KEYS.GEMINI_API_KEY]: settings.geminiApiKey
       ? settings.geminiApiKey.trim()
       : "",
@@ -91,9 +94,17 @@ function controllers_Main_initializeSystem() {
   Logger.log("CONTROLLER: Bắt đầu luồng Khởi tạo Hệ thống...");
   SheetService._getSpreadsheet();
   CalendarService._getCalendar();
+  // ** MODIFIED: Ưu tiên ngày người dùng cài đặt, nếu không có thì dùng ngày hiện tại
+  const properties = PropertiesService.getScriptProperties();
+  const userDefinedStartDate = properties.getProperty(
+    SCRIPT_PROPERTIES_KEYS.SYNC_START_DATE,
+  );
+  const startDate = userDefinedStartDate
+    ? userDefinedStartDate
+    : new Date().toISOString().split("T")[0];
 
-  const today = new Date().toISOString().split("T")[0];
-  const apiEvents = ApiService.fetchAllSchedulePages(today);
+  Logger.log(`CONTROLLER: Sử dụng ngày bắt đầu đồng bộ là: ${startDate}`);
+  const apiEvents = ApiService.fetchAllSchedulePages(startDate);
 
   const processedEvents = apiEvents.map((event) => ({
     ...event,
@@ -235,7 +246,7 @@ function controllers_Main_runIntelligentSync() {
         : "";
     emailBody = `Chào bạn,\n\nHệ thống vừa phát hiện các thay đổi trong lịch học của bạn:\n\n${addedText}\n\n${deletedText}\n\nVui lòng kiểm tra lại lịch.`;
   }
-   const emailFooter = `\n\n---\nĐể xem lịch gốc, vui lòng truy cập:\n${OFFICIAL_SCHEDULE_URL}`;
+  const emailFooter = `\n\n---\nĐể xem lịch gốc, vui lòng truy cập:\n${OFFICIAL_SCHEDULE_URL}`;
   emailBody += emailFooter;
 
   if (userEmail) {

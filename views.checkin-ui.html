@@ -7,16 +7,24 @@
     <title>Check-in Buổi học</title>
     <style>
       :root {
-        --primary-color: #4285f4; --background-color: #f5f5f5;
-        --card-background: #ffffff; --text-color: #212121;
-        --text-light: #757575; --success-color: #0f9d58;
+        --primary-color: #4285f4;
+        --background-color: #f5f5f5;
+        --card-background: #ffffff;
+        --text-color: #212121;
+        --text-light: #757575;
+        --success-color: #0f9d58;
         --danger-color: #db4437;
       }
       body {
-        margin: 0; padding: 20px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background-color: var(--background-color); color: var(--text-color);
-        display: flex; justify-content: center; align-items: flex-start;
+        margin: 0;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
         min-height: 100vh;
       }
       .container {
@@ -25,77 +33,134 @@
         text-align: center;
       }
       .card {
-        background-color: var(--card-background); border-radius: 12px;
-        padding: 24px; margin-bottom: 15px;
+        background-color: var(--card-background);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 15px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         opacity: 0;
         transform: translateY(20px);
         animation: fadeIn 0.5s forwards;
       }
       @keyframes fadeIn {
-        to { opacity: 1; transform: translateY(0); }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
       .title {
-        font-size: 20px; font-weight: 600; margin: 0 0 8px 0;
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
       }
       .subtitle {
-        font-size: 16px; color: var(--text-light); margin: 0;
+        font-size: 16px;
+        color: var(--text-light);
+        margin: 0;
       }
       .info-grid {
-        display: grid; grid-template-columns: auto 1fr;
-        gap: 8px; text-align: left; margin-top: 20px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 8px;
+        text-align: left;
+        margin-top: 20px;
         font-size: 16px;
       }
-      .label { color: var(--text-light); }
-      .value { font-weight: 500; }
-      #current-status {
-          padding: 6px 12px;
-          border-radius: 16px;
-          font-weight: 500;
-          color: white;
-          display: inline-block;
+      .label {
+        color: var(--text-light);
       }
-      .status-present { background-color: var(--success-color); }
-      .status-absent { background-color: var(--danger-color); }
-      .status-unknown { background-color: var(--text-light); }
+      .value {
+        font-weight: 500;
+      }
+      #current-status {
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-weight: 500;
+        color: white;
+        display: inline-block;
+      }
+      .status-present {
+        background-color: var(--success-color);
+      }
+      .status-absent {
+        background-color: var(--danger-color);
+      }
+      .status-unknown {
+        background-color: var(--text-light);
+      }
       .button-group {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 20px;
       }
       .btn {
-        width: 100%; padding: 12px; border: none; border-radius: 8px;
-        font-size: 16px; font-weight: 500; cursor: pointer; color: white;
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        color: white;
         transition: background-color 0.2s, opacity 0.2s;
-        display: flex; align-items: center; justify-content: center; gap: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
-      .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-      .btn-success { background-color: var(--success-color); }
-      .btn-danger { background-color: var(--danger-color); }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btn-success {
+        background-color: var(--success-color);
+      }
+      .btn-danger {
+        background-color: var(--danger-color);
+      }
       #message-area {
-        margin-top: 15px; font-weight: 500; min-height: 20px;
+        margin-top: 15px;
+        font-weight: 500;
+        min-height: 20px;
       }
-      .msg-success { color: var(--success-color); }
-      .msg-error { color: var(--danger-color); }
+      .msg-success {
+        color: var(--success-color);
+      }
+      .msg-error {
+        color: var(--danger-color);
+      }
       .loader {
-        margin: 20px auto; border: 4px solid #f3f3f3;
+        margin: 20px auto;
+        border: 4px solid #f3f3f3;
         border-top: 4px solid var(--primary-color);
-        border-radius: 50%; width: 30px; height: 30px;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
         animation: spin 1s linear infinite;
       }
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <div id="loader" class="loader"></div>
-      <div id="main-content" class="card" style="display: none;">
+      <div id="main-content" class="card" style="display: none">
         <h1 class="title" id="event-title">Đang tải...</h1>
         <p class="subtitle" id="event-time">Vui lòng chờ</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0" />
         <div class="info-grid">
-            <div class="label">📍 Phòng:</div>
-            <div class="value" id="event-location">...</div>
-            <div class="label">📊 Trạng thái:</div>
-            <div class="value"><span id="current-status">...</span></div>
+          <div class="label">📍 Phòng:</div>
+          <div class="value" id="event-location">...</div>
+          <div class="label">📊 Trạng thái:</div>
+          <div class="value"><span id="current-status">...</span></div>
         </div>
         <div class="button-group">
           <button id="btn-present" class="btn btn-success">✅ Có mặt</button>
@@ -108,107 +173,115 @@
     <script>
       // Dòng này rất quan trọng: lấy eventHash mà Code.gs đã truyền vào
       const eventHash = "<?!= eventHash ?>";
-      
+
       const dom = {
-          loader: document.getElementById('loader'),
-          mainContent: document.getElementById('main-content'),
-          title: document.getElementById('event-title'),
-          time: document.getElementById('event-time'),
-          location: document.getElementById('event-location'),
-          status: document.getElementById('current-status'),
-          message: document.getElementById('message-area'),
-          btnPresent: document.getElementById('btn-present'),
-          btnAbsent: document.getElementById('btn-absent'),
+        loader: document.getElementById("loader"),
+        mainContent: document.getElementById("main-content"),
+        title: document.getElementById("event-title"),
+        time: document.getElementById("event-time"),
+        location: document.getElementById("event-location"),
+        status: document.getElementById("current-status"),
+        message: document.getElementById("message-area"),
+        btnPresent: document.getElementById("btn-present"),
+        btnAbsent: document.getElementById("btn-absent"),
       };
 
       function setLoading(isLoading) {
-        dom.loader.style.display = isLoading ? 'block' : 'none';
-        dom.mainContent.style.display = isLoading ? 'none' : 'block';
+        dom.loader.style.display = isLoading ? "block" : "none";
+        dom.mainContent.style.display = isLoading ? "none" : "block";
       }
 
       function renderEvent(data) {
-        if(data.error){
-            dom.title.textContent = "Lỗi";
-            dom.time.textContent = data.error;
-            dom.location.textContent = "Không có";
-            dom.btnPresent.disabled = true;
-            dom.btnAbsent.disabled = true;
-            return;
+        if (data.error) {
+          dom.title.textContent = "Lỗi";
+          dom.time.textContent = data.error;
+          dom.location.textContent = "Không có";
+          dom.btnPresent.disabled = true;
+          dom.btnAbsent.disabled = true;
+          return;
         }
-  dom.title.textContent = data.tenMonHoc;
+        dom.title.textContent = data.tenMonHoc;
         dom.location.textContent = data.tenPhong;
-        
+
         try {
-            const date = new Date(data.thoiGianBD);
-            const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} lúc ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-            dom.time.textContent = formattedDate;
-        } catch(e) {
-            dom.time.textContent = "Không rõ thời gian";
+          const date = new Date(data.thoiGianBD);
+          const formattedDate = `${date.getDate()}/${
+            date.getMonth() + 1
+          }/${date.getFullYear()} lúc ${date
+            .getHours()
+            .toString()
+            .padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+          dom.time.textContent = formattedDate;
+        } catch (e) {
+          dom.time.textContent = "Không rõ thời gian";
         }
-        
+
         updateStatusUI(data.daCheckIn);
       }
 
-      function updateStatusUI(status){
+      function updateStatusUI(status) {
+        // ** MODIFIED: Cập nhật trực tiếp vào dom.status thay vì các thuộc tính riêng lẻ
+        const statusSpan = dom.status;
         if (status === true) {
-            dom.status.textContent = "Đã điểm danh CÓ MẶT";
-            dom.status.className = "status-present";
+          statusSpan.textContent = "Đã điểm danh CÓ MẶT";
+          statusSpan.className = "status-present";
         } else if (status === false) {
-            dom.status.textContent = "Đã điểm danh VẮNG MẶT";
-            dom.status.className = "status-absent";
+          statusSpan.textContent = "Đã điểm danh VẮNG MẶT";
+          statusSpan.className = "status-absent";
         } else {
-            dom.status.textContent = "Chưa điểm danh";
-            dom.status.className = "status-unknown";
+          statusSpan.textContent = "Chưa điểm danh";
+          statusSpan.className = "status-unknown";
         }
       }
 
       function showMessage(text, isError = false) {
-          dom.message.textContent = text;
-          dom.message.className = isError ? 'msg-error' : 'msg-success';
-          setTimeout(() => dom.message.textContent = '', 3000);
+        dom.message.textContent = text;
+        dom.message.className = isError ? "msg-error" : "msg-success";
+        setTimeout(() => (dom.message.textContent = ""), 3000);
       }
 
       function setCheckinStatus(status) {
-          setLoading(true);
-          google.script.run
-              .withSuccessHandler(response => {
-                  if(response.success){
-                      showMessage(response.message);
-                      updateStatusUI(status); // Cập nhật UI ngay lập tức
-                  } else {
-                      showMessage(response.message, true);
-                  }
-                  setLoading(false);
-              })
-              .withFailureHandler(err => {
-                  showMessage(err.message, true);
-                  setLoading(false);
-              })
-              .controllers_Checkin_setCheckinStatus(eventHash, status);
+        setLoading(true);
+        google.script.run
+          .withSuccessHandler((response) => {
+            if (response.success) {
+              showMessage(response.message);
+              updateStatusUI(status); // Cập nhật UI ngay lập tức
+            } else {
+              showMessage(response.message, true);
+            }
+            setLoading(false);
+          })
+          .withFailureHandler((err) => {
+            showMessage(err.message, true);
+            setLoading(false);
+          })
+          .controllers_Checkin_setCheckinStatus(eventHash, status);
       }
-      
-      // --- Event Listeners ---
-      document.addEventListener('DOMContentLoaded', () => {
-          if (!eventHash) {
-              setLoading(false);
-              renderEvent({ error: 'Không tìm thấy mã định danh sự kiện trong URL.' });
-              return;
-          }
-          google.script.run
-              .withSuccessHandler(data => {
-                  setLoading(false);
-                  renderEvent(data);
-              })
-              .withFailureHandler(err => {
-                  setLoading(false);
-                  renderEvent({ error: 'Lỗi giao tiếp với máy chủ: ' + err.message });
-              })
-              .controllers_Checkin_getEventForCheckin(eventHash);
-      });
-      
-      dom.btnPresent.addEventListener('click', () => setCheckinStatus(true));
-      dom.btnAbsent.addEventListener('click', () => setCheckinStatus(false));
 
+      // --- Event Listeners ---
+      document.addEventListener("DOMContentLoaded", () => {
+        if (!eventHash) {
+          setLoading(false);
+          renderEvent({
+            error: "Không tìm thấy mã định danh sự kiện trong URL.",
+          });
+          return;
+        }
+        google.script.run
+          .withSuccessHandler((data) => {
+            setLoading(false);
+            renderEvent(data);
+          })
+          .withFailureHandler((err) => {
+            setLoading(false);
+            renderEvent({ error: "Lỗi giao tiếp với máy chủ: " + err.message });
+          })
+          .controllers_Checkin_getEventForCheckin(eventHash);
+      });
+
+      dom.btnPresent.addEventListener("click", () => setCheckinStatus(true));
+      dom.btnAbsent.addEventListener("click", () => setCheckinStatus(false));
     </script>
   </body>
 </html>
